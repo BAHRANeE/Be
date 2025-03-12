@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>محول التاريخ البيداليزي المتطور – الأفضل والأحسن</title>
+  <style>
+    /* إعدادات عامة */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(to right, #2c3e50, #3498db);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    header {
+      width: 100%;
+      padding: 20px 0;
+      text-align: center;
+      background: rgba(0,0,0,0.3);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    header h1 {
+      font-size: 2.5em;
+      color: #f39c12;
+      animation: slideIn 1s ease-out;
+    }
+    @keyframes slideIn {
+      from { transform: translateY(-50px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    nav {
+      margin-top: 10px;
+    }
+    nav button {
+      background: #f39c12;
+      border: none;
+      padding: 10px 20px;
+      margin: 0 5px;
+      border-radius: 5px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.3s;
+    }
+    nav button:hover,
+    nav button.active {
+      background: #d4ac0d;
+      transform: scale(1.05);
+    }
+    main {
+      width: 100%;
+      max-width: 800px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+    .container {
+      background: rgba(255,255,255,0.15);
+      padding: 30px;
+      border-radius: 15px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 25px rgba(0,0,0,0.3);
+      border: 3px solid #f39c12;
+      animation: fadeIn 1s ease-in-out;
+      position: relative;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    h2 { margin-bottom: 15px; color: #f1c40f; font-size: 2em; }
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .input-group label {
+      margin-bottom: 5px;
+      font-size: 1.1em;
+      cursor: help;
+    }
+    .input-group input,
+    .input-group select {
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      width: 80%;
+      max-width: 300px;
+      font-size: 1em;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      text-align: center;
+    }
+    .input-group input[type="number"]::-webkit-outer-spin-button,
+    .input-group input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .action-btn {
+      background: #f1c40f;
+      color: #000;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1em;
+      transition: background 0.3s, transform 0.3s;
+      margin: 10px;
+    }
+    .action-btn:hover {
+      background: #d4ac0d;
+      transform: scale(1.03);
+    }
+    .reset-btn {
+      background: #e74c3c;
+      color: #fff;
+    }
+    .reset-btn:hover {
+      background: #c0392b;
+    }
+    .result-box {
+      background: rgba(0,0,0,0.7);
+      padding: 20px;
+      border-radius: 10px;
+      font-size: 1.3em;
+      margin-top: 10px;
+      position: relative;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #f39c12;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.8em;
+      transition: background 0.3s;
+    }
+    .copy-btn:hover {
+      background: #d4ac0d;
+    }
+    .highlight {
+      color: #f39c12;
+      font-weight: bold;
+    }
+    /* تبويبات */
+    .tab { display: none; }
+    .tab.active { display: block; }
+    /* سجل التحويلات */
+    .history {
+      margin-top: 15px;
+      background: rgba(0,0,0,0.5);
+      padding: 10px;
+      border-radius: 8px;
+      max-height: 150px;
+      overflow-y: auto;
+      text-align: right;
+      font-size: 0.9em;
+    }
+    .history h3 {
+      margin-bottom: 5px;
+      font-size: 1.2em;
+      color: #f1c40f;
+    }
+    .history-entry {
+      margin-bottom: 5px;
+      border-bottom: 1px dashed #fff;
+      padding-bottom: 3px;
+    }
+    .clear-history {
+      background: #e74c3c;
+      color: #fff;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 0.9em;
+      cursor: pointer;
+      transition: background 0.3s;
+      margin-top: 5px;
+    }
+    .clear-history:hover { background: #c0392b; }
+    /* نافذة حول النظام */
+    .modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      background: #fff;
+      color: #333;
+      padding: 30px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 500px;
+      text-align: right;
+      position: relative;
+    }
+    .modal-content h2 {
+      margin-bottom: 15px;
+      color: #2c3e50;
+    }
+    .modal-content p {
+      font-size: 1em;
+      line-height: 1.5;
+    }
+    .modal-close {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: #e74c3c;
+      color: #fff;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.9em;
+    }
+    /* زر تنزيل التقويم */
+    .download-btn {
+      background: #3498db;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      margin-top: 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1em;
+      transition: background 0.3s;
+    }
+    .download-btn:hover {
+      background: #2980b9;
+    }
+    /* استجابة التصميم */
+    @media (max-width: 768px) {
+      header h1 { font-size: 2em; }
+      nav button { font-size: 0.9em; padding: 8px 16px; }
+      h2 { font-size: 1.8em; }
+      .input-group input, .input-group select { width: 90%; }
+      .action-btn, .reset-btn { font-size: 0.9em; padding: 10px 20px; }
+      .result-box { font-size: 1.1em; }
+    }
+    @media (max-width: 480px) {
+      header h1 { font-size: 1.6em; }
+      nav button { font-size: 0.8em; padding: 6px 12px; }
+      h2 { font-size: 1.5em; }
+      .input-group input, .input-group select { width: 95%; }
+      .action-btn, .reset-btn { font-size: 0.8em; padding: 8px 16px; }
+      .result-box { font-size: 1em; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="current-bidalizi" class="highlight">
+      🔹 التاريخ البيداليزي لليوم: <span id="current-bidalizi-text"></span>
+    </h1>
+    <nav>
+      <button id="tab-m2b" class="active" onclick="showTab('m2b')">من ميلادي إلى بيداليزي</button>
+      <button id="tab-b2m" onclick="showTab('b2m')">من بيداليزي إلى ميلادي</button>
+      <button onclick="openModal()">حول النظام</button>
+      <button class="download-btn" onclick="downloadCalendar()">تنزيل التقويم البيداليزي</button>
+    </nav>
+  </header>
+  <main>
+    <!-- تبويب تحويل التاريخ من ميلادي إلى بيداليزي -->
+    <section id="m2b" class="tab active">
+      <div class="container">
+        <h2>🔄 تحويل التاريخ الميلادي إلى البيداليزي</h2>
+        <div class="input-group">
+          <label for="gregorian-date" title="اختر التاريخ الميلادي">📆 أدخل التاريخ الميلادي:</label>
+          <input type="date" id="gregorian-date">
+        </div>
+        <div>
+          <button class="action-btn" onclick="convertToBidalizi()">تحويل</button>
+          <button class="reset-btn" onclick="resetGregorian()">إعادة تعيين</button>
+        </div>
+        <div class="result-box" id="result">
+          <em>ستظهر النتيجة هنا...</em>
+          <button class="copy-btn" onclick="copyResult('result')">نسخ</button>
+        </div>
+        <div class="history" id="history-m2b">
+          <h3>سجل التحويلات</h3>
+          <button class="clear-history" onclick="clearHistory('history-m2b')">مسح السجل</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- تبويب تحويل التاريخ من بيداليزي إلى ميلادي -->
+    <section id="b2m" class="tab">
+      <div class="container">
+        <h2>🔄 تحويل التاريخ البيداليزي إلى الميلادي</h2>
+        <div class="input-group">
+          <label for="bidalizi-year" title="أدخل السنة البيداليزية">📅 أدخل السنة البيداليزية:</label>
+          <input type="number" id="bidalizi-year" placeholder="مثلاً: 10">
+        </div>
+        <div class="input-group">
+          <label for="bidalizi-month" title="اختر الشهر البيداليزي">🗓 اختر الشهر البيداليزي:</label>
+          <select id="bidalizi-month">
+            <option value="0">التاردي</option>
+            <option value="1">الماركيدي</option>
+            <option value="2">التوردايكي</option>
+            <option value="3">الكايداركي</option>
+            <option value="4">الميكدي</option>
+            <option value="5">الفايدرديكي</option>
+            <option value="6">الهايدردير</option>
+            <option value="7">النوردردير</option>
+            <option value="8">الرازيدزي</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label for="bidalizi-day" title="أدخل اليوم البيداليزي (من 1 إلى 14)">🗓 اختر اليوم البيداليزي:</label>
+          <input type="number" id="bidalizi-day" placeholder="مثلاً: 5">
+        </div>
+        <div>
+          <button class="action-btn" onclick="convertToGregorian()">تحويل</button>
+          <button class="reset-btn" onclick="resetBidalizi()">إعادة تعيين</button>
+        </div>
+        <div class="result-box" id="reverse-result">
+          <em>ستظهر النتيجة هنا...</em>
+          <button class="copy-btn" onclick="copyResult('reverse-result')">نسخ</button>
+        </div>
+        <div class="history" id="history-b2m">
+          <h3>سجل التحويلات</h3>
+          <button class="clear-history" onclick="clearHistory('history-b2m')">مسح السجل</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- نافذة حول النظام -->
+  <div class="modal" id="about-modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal()">إغلاق</button>
+      <h2>حول التاريخ البيداليزي</h2>
+      <p>
+        يعتمد نظام "التاريخ البيداليزي" على بداية محددة (8 مايو 2010 ميلادي) ويقسم السنة إلى 407 يومًا موزعة على 9 أشهر و14 يومًا في الأسبوع.
+        هذا النظام هو تجربة ابتكارية لتحويل التاريخ بين الأنظمة الميلادية والبيداليزية.
+        <br><br>
+        يمكنك استخدام هذه الأداة لتحويل التواريخ من الميلادي إلى البيداليزي والعكس، كما يمكنك تنزيل ملف يحتوي على معلومات كاملة عن النظام.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // تعريف الأشهر والأيام البيداليزية
+    const bidaliziMonths = [
+      "التاردي", "الماركيدي", "التوردايكي", "الكايداركي", "الميكدي", 
+      "الفايدرديكي", "الهايدردير", "النوردردير", "الرازيدزي"
+    ];
+    const bidaliziDays = [
+      "التاجيكي", "الراجيكي", "الكالجيكي", "الواجيكي", "الفاجيكي", 
+      "الناجيكي", "الساجيكي", "الفالديكي", "الوارديكي", "هايرديزي", 
+      "فايديردي", "كايبيردي", "ذايديكي", "مايديكهي"
+    ];
+    const DAYS_IN_YEAR = 407;
+    const DAYS_IN_MONTH = Math.floor(DAYS_IN_YEAR / 9);
+
+    // دالة حساب الأيام بين تاريخين
+    function daysBetween(date1, date2) {
+      const oneDay = 1000 * 60 * 60 * 24;
+      return Math.floor((date2 - date1) / oneDay);
+    }
+
+    // تحويل التاريخ الميلادي إلى البيداليزي
+    function convertToBidalizi() {
+      const inputDate = new Date(document.getElementById("gregorian-date").value);
+      const startBidalizi = new Date(2010, 4, 8); // 8 مايو 2010
+      if (isNaN(inputDate)) {
+        document.getElementById("result").innerHTML = "<span style='color:red;'>❌ الرجاء إدخال تاريخ ميلادي صالح.</span>";
+        return;
+      }
+      let totalDays = daysBetween(startBidalizi, inputDate);
+      let bidaliziYear = Math.floor(totalDays / DAYS_IN_YEAR);
+      let remainingDays = totalDays % DAYS_IN_YEAR;
+      let monthIndex = 0;
+      while (remainingDays >= DAYS_IN_MONTH && monthIndex < 8) {
+        remainingDays -= DAYS_IN_MONTH;
+        monthIndex++;
+      }
+      let bidaliziMonth = bidaliziMonths[monthIndex];
+      let bidaliziDay = bidaliziDays[remainingDays % 14];
+      let bidaliziDayNumber = remainingDays + 1;
+      const resultHTML = `
+        📆 التاريخ البيداليزي: <span class="highlight">${bidaliziDay}, ${bidaliziDayNumber} ${bidaliziMonth} سنة ${bidaliziYear}</span><br>
+        🏷 بالأرقام: <span class="highlight">${bidaliziDayNumber}/${monthIndex + 1}/${bidaliziYear}</span>`;
+      document.getElementById("result").innerHTML = resultHTML;
+      addHistory("history-m2b", resultHTML);
+    }
+
+    // تحويل التاريخ البيداليزي إلى الميلادي
+    function convertToGregorian() {
+      const bidaliziYear = parseInt(document.getElementById("bidalizi-year").value);
+      const bidaliziMonth = parseInt(document.getElementById("bidalizi-month").value);
+      const bidaliziDay = parseInt(document.getElementById("bidalizi-day").value);
+      if (isNaN(bidaliziYear) || isNaN(bidaliziMonth) || isNaN(bidaliziDay) ||
+          bidaliziDay < 1 || bidaliziDay > 14 || bidaliziMonth < 0 || bidaliziMonth > 8) {
+        document.getElementById("reverse-result").innerHTML = "<span style='color:red;'>❌ الرجاء إدخال تاريخ بيداليزي صالح.</span>";
+        return;
+      }
+      let totalDays = bidaliziYear * DAYS_IN_YEAR;
+      totalDays += bidaliziMonth * DAYS_IN_MONTH;
+      totalDays += bidaliziDay - 1;
+      const startBidalizi = new Date(2010, 4, 8);
+      const gregorianDate = new Date(startBidalizi.getTime() + totalDays * 1000 * 60 * 60 * 24);
+      const resultText = `📅 التاريخ الميلادي: <span class="highlight">${gregorianDate.toLocaleDateString()}</span>`;
+      document.getElementById("reverse-result").innerHTML = resultText;
+      addHistory("history-b2m", resultText);
+    }
+
+    // عرض التاريخ البيداليزي لليوم
+    function displayCurrentBidalizi() {
+      const today = new Date();
+      const startBidalizi = new Date(2010, 4, 8);
+      let totalDays = daysBetween(startBidalizi, today);
+      let bidaliziYear = Math.floor(totalDays / DAYS_IN_YEAR);
+      let remainingDays = totalDays % DAYS_IN_YEAR;
+      let monthIndex = 0;
+      while (remainingDays >= DAYS_IN_MONTH && monthIndex < 8) {
+        remainingDays -= DAYS_IN_MONTH;
+        monthIndex++;
+      }
+      let bidaliziMonth = bidaliziMonths[monthIndex];
+      let bidaliziDay = bidaliziDays[remainingDays % 14];
+      let bidaliziDayNumber = remainingDays + 1;
+      document.getElementById("current-bidalizi-text").innerHTML = 
+          `${bidaliziDay}, ${bidaliziDayNumber} ${bidaliziMonth} سنة ${bidaliziYear}`;
+    }
+
+    // دالة لنسخ النص المحدد (النتيجة فقط)
+    function copyResult(elementId) {
+      // نسخ النص الموجود داخل العنصر الذي يحتوي على النتيجة فقط (بدون أزرار أو إضافات)
+      const tempElement = document.createElement("div");
+      tempElement.innerHTML = document.getElementById(elementId).innerText;
+      document.body.appendChild(tempElement);
+      const range = document.createRange();
+      range.selectNodeContents(tempElement);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      try {
+        document.execCommand("copy");
+        alert("تم نسخ النتيجة!");
+      } catch (err) {
+        alert("حدث خطأ أثناء النسخ.");
+      }
+      document.body.removeChild(tempElement);
+    }
+
+    // إضافة سجل عملية تحويل
+    function addHistory(historyId, text) {
+      const historyContainer = document.getElementById(historyId);
+      const entry = document.createElement("div");
+      entry.className = "history-entry";
+      entry.innerHTML = text;
+      historyContainer.insertBefore(entry, historyContainer.children[1]);
+    }
+
+    // مسح سجل التحويلات
+    function clearHistory(historyId) {
+      const historyContainer = document.getElementById(historyId);
+      historyContainer.querySelectorAll(".history-entry").forEach(entry => entry.remove());
+    }
+
+    // التنقل بين التبويبات
+    function showTab(tabId) {
+      document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
+      document.getElementById(tabId).classList.add("active");
+      document.querySelectorAll("nav button").forEach(btn => btn.classList.remove("active"));
+      document.getElementById("tab-" + tabId).classList.add("active");
+    }
+
+    // إعادة تعيين نموذج الميلادي
+    function resetGregorian() {
+      document.getElementById("gregorian-date").value = "";
+      document.getElementById("result").innerHTML = "<em>ستظهر النتيجة هنا...</em><button class='copy-btn' onclick=\"copyResult('result')\">نسخ</button>";
+    }
+
+    // إعادة تعيين نموذج البيداليزي
+    function resetBidalizi() {
+      document.getElementById("bidalizi-year").value = "";
+      document.getElementById("bidalizi-month").value = "0";
+      document.getElementById("bidalizi-day").value = "";
+      document.getElementById("reverse-result").innerHTML = "<em>ستظهر النتيجة هنا...</em><button class='copy-btn' onclick=\"copyResult('reverse-result')\">نسخ</button>";
+    }
+
+    // فتح نافذة "حول النظام"
+    function openModal() {
+      document.getElementById("about-modal").classList.add("active");
+    }
+    function closeModal() {
+      document.getElementById("about-modal").classList.remove("active");
+    }
+
+    // إنشاء ملف نصي يحتوي على معلومات التقويم وتنزيله
+    function downloadCalendar() {
+      const calendarInfo = `
+        نظام التاريخ البيداليزي:
+        - يبدأ من 8 مايو 2010 ميلادي.
+        - السنة تحتوي على ${DAYS_IN_YEAR} يومًا.
+        - تتوزع الأيام على 9 أشهر.
+        - الأسبوع يحتوي على 14 يومًا.
+        - أشهر النظام: ${bidaliziMonths.join(", ")}.
+        - أيام الأسبوع: ${bidaliziDays.join(", ")}.
+        - هذا النظام هو تجربة ابتكارية لتحويل التاريخ بين الأنظمة الميلادية والبيداليزية.
+      `;
+      const blob = new Blob([calendarInfo], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "التقويم_البيداليزي.txt";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // تحديث التاريخ البيداليزي لليوم عند تحميل الصفحة
+    displayCurrentBidalizi();
+  </script>
+</body>
+</html>
