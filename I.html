@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>التقويم البيداليزي - تطبيق خارق متعدد الميزات</title>
+  <!-- استخدام خط "Cairo" من Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+  <!-- ربط manifest لتطبيق PWA (يجب إنشاء ملف manifest.json منفصل) -->
+  <link rel="manifest" href="manifest.json">
+  <style>
+    /* إعادة تعيين الأنماط العامة */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Cairo', sans-serif; background-color: #f0f4f8; direction: rtl; color: #333; }
+    header { 
+      background: linear-gradient(135deg, #283593, #5c6bc0); 
+      color: #fff; 
+      padding: 20px 10px; 
+      text-align: center; 
+      position: relative;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+    header h1 { font-size: 2em; margin-bottom: 5px; }
+    #currentBedDate { font-size: 1.2em; margin-top: 10px; font-weight: bold; }
+    /* قائمة اختيار اللغة */
+    #langSelect {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 4px;
+      background-color: #fff;
+      color: #283593;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    #headerSubtitle { margin-top: 5px; font-size: 0.95em; }
+    /* شريط السنوات الأفقي (يشبه اختيار التاريخ الميلادي) */
+    .year-bar {
+      display: flex;
+      overflow-x: auto;
+      white-space: nowrap;
+      background-color: #e8eaf6;
+      padding: 10px;
+      border-bottom: 2px solid #ccc;
+    }
+    .year-bar .year-item {
+      flex: 0 0 auto;
+      margin: 0 5px;
+      padding: 8px 12px;
+      background-color: #c5cae9;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .year-bar .year-item:hover { background-color: #9fa8da; }
+    /* منطقة عرض التقويم للسنة المختارة */
+    .calendar-container {
+      padding: 10px;
+      overflow-y: auto;
+      max-height: 70vh;
+    }
+    .month-card {
+      background-color: #fff;
+      margin: 10px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 10px;
+    }
+    .month-card h2 { margin-bottom: 10px; text-align: center; }
+    .days-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 5px;
+    }
+    .day-cell {
+      background-color: #f5f5f5;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 5px;
+      text-align: center;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .day-cell:hover { background-color: #e0e0e0; }
+    /* قسم أدوات تحويل التواريخ */
+    .conversion-section {
+      margin: 20px;
+      background-color: #fff3e0;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .conversion-section h2 { margin-bottom: 10px; text-align: center; }
+    .conversion-section select, .conversion-section input {
+      padding: 8px;
+      margin: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+    .conversion-section button {
+      padding: 8px 16px;
+      background-color: #4F81BD;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    /* زر الطباعة وتنزيل CSV */
+    #printBtn, #downloadBtn {
+      margin-top: 10px;
+      padding: 8px 16px;
+      background-color: #4F81BD;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    /* زر تثبيت التطبيق */
+    #installBtn {
+      display: none;
+      padding: 10px 20px;
+      background-color: #4F81BD;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    /* استجابة أفضل للأجهزة المحمولة */
+    @media (max-width: 768px) {
+      .year-bar { flex-wrap: nowrap; }
+      .calendar-container { max-height: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="headerTitle">التقويم البيداليزي</h1>
+    <div id="currentBedDate"></div>
+    <select id="langSelect">
+      <option value="ar">العربية</option>
+      <option value="en">English</option>
+      <option value="fa">فارسی</option>
+      <option value="ur">اردو</option>
+    </select>
+    <p id="headerSubtitle"></p>
+  </header>
+  
+  <!-- شريط السنوات الأفقي -->
+  <div class="year-bar" id="yearBar"></div>
+  
+  <!-- منطقة عرض التقويم للسنة المختارة -->
+  <div class="calendar-container" id="calendarContainer">
+    <h2 id="selectedYearHeader" style="text-align:center; margin-bottom:10px;"></h2>
+    <div id="monthsContainer"></div>
+    <div style="text-align:center; margin-top:10px;">
+      <button id="printBtn">طباعة التقويم</button>
+      <button id="downloadBtn">تنزيل CSV</button>
+    </div>
+  </div>
+  
+  <!-- قسم تحويل التواريخ -->
+  <div class="conversion-section" id="conversionSection">
+    <h2>أدوات تحويل التواريخ</h2>
+    <select id="conversionType">
+      <option value="g2b">ميلادي → بيداليزي</option>
+      <option value="b2g">بيداليزي → ميلادي</option>
+      <option value="h2b">هجري (شيعي) → بيداليزي</option>
+      <option value="b2h">بيداليزي → هجري (شيعي)</option>
+      <option value="g2h">ميلادي → هجري (شيعي)</option>
+      <option value="h2g">هجري (شيعي) → ميلادي</option>
+    </select>
+    <div id="conversionInputs">
+      <!-- حقول الإدخال ستظهر هنا حسب نوع التحويل -->
+    </div>
+    <button id="convertBtn">تحويل</button>
+    <div id="conversionResult" style="margin-top:10px; font-weight:bold; text-align:center;"></div>
+  </div>
+  
+  <!-- قسم المعلومات عن التقويم -->
+  <div class="conversion-section info-section">
+    <h2>معلومات عن التقويم البيداليزي</h2>
+    <p>
+      يعتمد التقويم البيداليزي على سنة مكونة من 407 يومًا مقسمة إلى 9 أشهر (8 أشهر بـ45 يومًا وشهر واحد بـ47 يومًا). 
+      يُستخدم هذا النظام في بعض الدراسات والبحوث الثقافية ويقدم طريقة بديلة لحساب الزمن مقارنةً بالتقويم الميلادي والهجري.
+    </p>
+  </div>
+  
+  <!-- زر تثبيت التطبيق -->
+  <div style="text-align:center; margin:20px;">
+    <button id="installBtn">تثبيت التطبيق</button>
+  </div>
+  
+  <script>
+    /**************** إعدادات اللغات والترجمة ****************/
+    const languages = ["ar", "en", "fa", "ur"];
+    let currentLanguage = "ar";
+    
+    const translations = {
+      ar: {
+        headerTitle: "التقويم البيداليزي",
+        headerSubtitle: "أفضل تقويم تفاعلي مع مميزات خارقة، تحويل التواريخ، طباعة وتنزيل التقويم، وأكثر!",
+        selectedYear: "السنة: ",
+        currentBedDate: "التاريخ البيداليزي الحالي:",
+        volumeLabel: "مستوى الصوت:",
+        conversionTitle: "أدوات تحويل التواريخ",
+        reminderButton: "", // غير مستخدمة
+        reminderPlaceholder: "", // غير مستخدمة
+        remindersTitle: "", // غير مستخدمة
+        delete: "حذف" // غير مستخدمة
+      },
+      en: {
+        headerTitle: "Bedalizian Calendar",
+        headerSubtitle: "The ultimate interactive calendar with amazing features, date conversion tools, print and download options, and more!",
+        selectedYear: "Year: ",
+        currentBedDate: "Current Bedalizian Date:",
+        volumeLabel: "Volume:",
+        conversionTitle: "Date Conversion Tools",
+        reminderButton: "",
+        reminderPlaceholder: "",
+        remindersTitle: "",
+        delete: "Delete"
+      },
+      fa: {
+        headerTitle: "تقویم بدالیزی",
+        headerSubtitle: "تقویم فوق‌العاده تعاملی با امکانات شگفت‌انگیز، ابزار تبدیل تاریخ، گزینه چاپ و دانلود و غیره!",
+        selectedYear: "سال: ",
+        currentBedDate: "تاریخ بدالیزی فعلی:",
+        volumeLabel: "سطح صدا:",
+        conversionTitle: "ابزار تبدیل تاریخ",
+        reminderButton: "",
+        reminderPlaceholder: "",
+        remindersTitle: "",
+        delete: "حذف"
+      },
+      ur: {
+        headerTitle: "بدالیزی کیلنڈر",
+        headerSubtitle: "بے مثال تعاملی کیلنڈر شاندار خصوصیات، تاریخ تبدیل کے اوزار، پرنٹ اور ڈاؤن لوڈ کے آپشنز، اور بہت کچھ!",
+        selectedYear: "سال: ",
+        currentBedDate: "موجودہ بدالیزی تاریخ:",
+        volumeLabel: "آواز:",
+        conversionTitle: "تاریخ تبدیل کرنے کے اوزار",
+        reminderButton: "",
+        reminderPlaceholder: "",
+        remindersTitle: "",
+        delete: "حذف کریں"
+      }
+    };
+    
+    function updateInterfaceText() {
+      document.getElementById("headerTitle").textContent = translations[currentLanguage].headerTitle;
+      document.getElementById("headerSubtitle").textContent = translations[currentLanguage].headerSubtitle;
+      populateYearBar();
+      const selectedYearText = document.getElementById("selectedYearHeader").textContent;
+      if(selectedYearText && selectedYearText !== translations[currentLanguage].selectedYear) {
+        let year = selectedYearText.split(": ")[1];
+        if(year) loadCalendarForYear(Number(year));
+      }
+      document.getElementById("volumeLabel").textContent = translations[currentLanguage].volumeLabel;
+      document.querySelector("#conversionSection h2").textContent = translations[currentLanguage].conversionTitle;
+      updateCurrentBedDate();
+    }
+    
+    document.getElementById("langSelect").addEventListener("change", function() {
+      currentLanguage = this.value;
+      updateInterfaceText();
+    });
+    
+    /**************** بيانات التقويم البيداليزي ****************/
+    const bedMonthsAr = ["التاردي", "الماركيدي", "التوردايكي", "الكايداركي", "الميكدي", "الفايدرديكي", "الهايدردير", "النوردردير", "الرازيدزي"];
+    const bedMonthsEn = ["Tardi", "Markidi", "Tordaiki", "Kaidarki", "Mikdi", "Faidardiki", "Haidardir", "Nordardir", "Razedzi"];
+    const bedMonthsFa = ["تاردي", "مارکیدی", "توردايكي", "کایدارکی", "میکدی", "فایدردی‌کی", "هایدردیر", "نوردردیر", "رازیدزی"];
+    const bedMonthsUr = ["تارڈی", "مارکیڈی", "تورڈائکی", "کایدارکی", "میکدی", "فایدردی کی", "ہائڈرڈر", "نوردردیر", "رازیدزی"];
+    const daysPerMonth = {
+      "التاردي": 45,
+      "الماركيدي": 45,
+      "التوردايكي": 45,
+      "الكايداركي": 45,
+      "الميكدي": 45,
+      "الفايدرديكي": 45,
+      "الهايدردير": 45,
+      "النوردردير": 45,
+      "الرازيدزي": 47
+    };
+    const bedDayNamesAr = ["التاجيكي", "الراجيكي", "الكالجيكي", "الواجيكي", "الفاجيكي", "الناجيكي", "الساجيكي", "الفالديكي", "الوارديكي", "هايرديزي", "فايديردي", "دي كايبير", "ذايديكي", "مايديكهي"];
+    const bedDayNamesEn = ["Tajiqi", "Rajiqi", "Kalajiqi", "Wajiqi", "Fajiqi", "Najiqi", "Sajiqi", "Faldiqi", "Warajiqi", "Hairidizi", "Faidiridi", "Di Kaibir", "Zhaidiki", "Maydiki"];
+    const bedDayNamesFa = ["تاجيکي", "راجيکي", "كالجيکي", "واجيکي", "فاجيکي", "ناجيکي", "ساجيکي", "فالديکي", "وارجيکي", "هايرديزي", "فايدردي", "دي كايبير", "ذايديکي", "مايديکي"];
+    const bedDayNamesUr = ["تاجیکی", "راجیکی", "کالجیکی", "واجیکی", "فاجیکی", "ناجیکی", "ساجیکی", "فالدیقی", "وارجیقی", "ہائیرڈیسی", "فائدیرڈی", "دی کائیبیر", "ذایدیقی", "ماییدیقی"];
+    
+    /**************** شريط السنوات الأفقي ****************/
+    const startYear = 13;
+    const endYear = 2012; // تقريباً 2000 سنة
+    const yearBar = document.getElementById("yearBar");
+    function populateYearBar() {
+      yearBar.innerHTML = "";
+      for (let y = startYear; y <= endYear; y++) {
+        const span = document.createElement("span");
+        span.className = "year-item";
+        span.textContent = y;
+        span.addEventListener("click", () => loadCalendarForYear(y));
+        yearBar.appendChild(span);
+      }
+    }
+    populateYearBar();
+    
+    /**************** تحميل تقويم السنة ****************/
+    function loadCalendarForYear(year) {
+      document.getElementById("selectedYearHeader").textContent = translations[currentLanguage].selectedYear + year;
+      const container = document.getElementById("monthsContainer");
+      container.innerHTML = "";
+      for (let m = 0; m < bedMonthsAr.length; m++) {
+        let monthName;
+        if (currentLanguage === "ar") monthName = bedMonthsAr[m];
+        else if (currentLanguage === "en") monthName = bedMonthsEn[m];
+        else if (currentLanguage === "fa") monthName = bedMonthsFa[m];
+        else if (currentLanguage === "ur") monthName = bedMonthsUr[m];
+        const daysCount = daysPerMonth[bedMonthsAr[m]];
+        const monthCard = document.createElement("div");
+        monthCard.className = "month-card";
+        monthCard.innerHTML = `<h2>${monthName}</h2>`;
+        const grid = document.createElement("div");
+        grid.className = "days-grid";
+        for (let d = 1; d <= daysCount; d++) {
+          const dayName = getDayName(d - 1);
+          const cell = document.createElement("div");
+          cell.className = "day-cell";
+          cell.innerHTML = `<div>${d}</div><div>${dayName}</div>`;
+          // عند النقر على اليوم، يتم فتح نافذة التحويل (يمكنك تعديلها لتشمل خصائص أخرى)
+          cell.addEventListener("click", () => {
+            const gDate = convertBedalizianToGregorian(year, m, d);
+            alert(`${translations[currentLanguage].selectedYear}${year}\nاليوم الميلادي: ${gDate.toDateString()}`);
+          });
+          grid.appendChild(cell);
+        }
+        monthCard.appendChild(grid);
+        container.appendChild(monthCard);
+      }
+    }
+    
+    function getDayName(index) {
+      if (currentLanguage === "ar") return bedDayNamesAr[index % bedDayNamesAr.length];
+      if (currentLanguage === "en") return bedDayNamesEn[index % bedDayNamesEn.length];
+      if (currentLanguage === "fa") return bedDayNamesFa[index % bedDayNamesFa.length];
+      if (currentLanguage === "ur") return bedDayNamesUr[index % bedDayNamesUr.length];
+      return bedDayNamesAr[index % bedDayNamesAr.length];
+    }
+    
+    /**************** دوال التحويل ****************/
+    // تحويل ميلادي → بيداليزي (تحسين مبسط)
+    function convertGregorianToBedalizian(date) {
+      const baseGregorian = new Date("2024-11-01T00:00:00");
+      const baseBedYear = 13;
+      const diffDays = Math.floor((date - baseGregorian) / (1000 * 60 * 60 * 24));
+      const daysInYear = 407;
+      const yearOffset = Math.floor(diffDays / daysInYear);
+      const bedYear = baseBedYear + yearOffset;
+      let remaining = diffDays % daysInYear;
+      if (remaining < 0) remaining += daysInYear;
+      let bedMonthIndex = 0;
+      for (let i = 0; i < bedMonthsAr.length; i++) {
+        if (remaining < daysPerMonth[bedMonthsAr[i]]) {
+          bedMonthIndex = i;
+          break;
+        }
+        remaining -= daysPerMonth[bedMonthsAr[i]];
+      }
+      const bedDay = remaining + 1;
+      return { year: bedYear, monthIndex: bedMonthIndex, day: bedDay };
+    }
+    // تحويل بيداليزي → ميلادي
+    function convertBedalizianToGregorian(bedYear, bedMonthIndex, bedDay) {
+      const baseGregorian = new Date("2024-11-01T00:00:00");
+      const baseBedYear = 13;
+      let totalDays = (bedYear - baseBedYear) * 407;
+      for (let i = 0; i < bedMonthIndex; i++) {
+        totalDays += daysPerMonth[bedMonthsAr[i]];
+      }
+      totalDays += (bedDay - 1);
+      return new Date(baseGregorian.getTime() + totalDays * 86400000);
+    }
+    // تحويل ميلادي → هجري (تقريباً)
+    function convertGregorianToHijri(date) {
+      const m = date.getMonth() + 1;
+      const y = date.getFullYear();
+      const d = date.getDate();
+      const a = Math.floor((14 - m) / 12);
+      const y1 = y + 4800 - a;
+      const m1 = m + 12 * a - 3;
+      const jd = d + Math.floor((153 * m1 + 2) / 5) + 365 * y1 + Math.floor(y1 / 4) - Math.floor(y1 / 100) + Math.floor(y1 / 400) - 32045;
+      const l = jd - 1948440 + 10632;
+      const n = Math.floor((l - 1) / 10631);
+      const l1 = l - 10631 * n + 354;
+      const j = (Math.floor((10985 - l1) / 5316)) * (Math.floor((50 * l1) / 17719)) + (Math.floor(l1 / 5670)) * (Math.floor((43 * l1) / 15238));
+      const l2 = l1 - Math.floor((30 - j) / 15) * (Math.floor((17719 * j) / 50)) - Math.floor(j / 16) * (Math.floor((15238 * j) / 43)) + 29;
+      const hMonth = Math.floor((24 * l2) / 709);
+      const hDay = l2 - Math.floor((709 * hMonth) / 24);
+      const hYear = 30 * n + j - 30;
+      return { year: hYear, month: hMonth, day: hDay };
+    }
+    // تحويل هجري → ميلادي (تقريباً)
+    function convertHijriToGregorian(hYear, hMonth, hDay) {
+      const jd = Math.floor((11 * hYear + 3) / 30) + 354 * hYear + 30 * hMonth - Math.floor((hMonth - 1) / 2) + hDay + 1948440 - 385;
+      const f = jd + 0.5;
+      const z = Math.floor(f);
+      const a = z < 2299161 ? z : Math.floor((z - 1867216.25) / 36524.25) + 1;
+      const b = z + 1 + a - Math.floor(a / 4);
+      const c = b + 1524;
+      const d = Math.floor((c - 122.1) / 365.25);
+      const e = Math.floor(365.25 * d);
+      const g = Math.floor((c - e) / 30.6001);
+      const day = c - e - Math.floor(30.6001 * g);
+      const month = g < 13.5 ? g - 1 : g - 13;
+      const year = month > 2 ? d - 4716 : d - 4715;
+      return new Date(year, month - 1, day);
+    }
+    // تحويل هجري → بيداليزي: هجري → ميلادي → بيداليزي
+    function convertHijriToBedalizian(hYear, hMonth, hDay) {
+      const gDate = convertHijriToGregorian(hYear, hMonth, hDay);
+      return convertGregorianToBedalizian(gDate);
+    }
+    // تحويل بيداليزي → هجري: بيداليزي → ميلادي → هجري
+    function convertBedalizianToHijri(bedYear, bedMonthIndex, bedDay) {
+      const gDate = convertBedalizianToGregorian(bedYear, bedMonthIndex, bedDay);
+      return convertGregorianToHijri(gDate);
+    }
+    
+    /**************** قسم تحويل التواريخ في الواجهة ****************/
+    const conversionSection = document.getElementById("conversionSection");
+    const conversionInputs = document.getElementById("conversionInputs");
+    const conversionTypeSelect = document.getElementById("conversionType");
+    const conversionResultDiv = document.getElementById("conversionResult");
+    
+    function updateConversionInputs() {
+      const type = conversionTypeSelect.value;
+      let html = "";
+      if(type === "g2b") {
+        html = `<label>التاريخ الميلادي: </label>
+                <input type="date" id="inputDate">`;
+      } else if(type === "b2g") {
+        html = `<label>السنة البيداليزية: </label>
+                <input type="number" id="inputBedYear" placeholder="مثلاً 13">
+                <label>الشهر (0-8): </label>
+                <input type="number" id="inputBedMonth" placeholder="مثلاً 0">
+                <label>اليوم: </label>
+                <input type="number" id="inputBedDay" placeholder="مثلاً 1">`;
+      } else if(type === "h2b") {
+        html = `<label>السنة الهجرية: </label>
+                <input type="number" id="inputHijriYear" placeholder="مثلاً 1446">
+                <label>الشهر: </label>
+                <input type="number" id="inputHijriMonth" placeholder="مثلاً 1">
+                <label>اليوم: </label>
+                <input type="number" id="inputHijriDay" placeholder="مثلاً 1">`;
+      } else if(type === "b2h") {
+        html = `<label>السنة البيداليزية: </label>
+                <input type="number" id="inputBedYear" placeholder="مثلاً 13">
+                <label>الشهر (0-8): </label>
+                <input type="number" id="inputBedMonth" placeholder="مثلاً 0">
+                <label>اليوم: </label>
+                <input type="number" id="inputBedDay" placeholder="مثلاً 1">`;
+      } else if(type === "g2h") {
+        html = `<label>التاريخ الميلادي: </label>
+                <input type="date" id="inputDate">`;
+      } else if(type === "h2g") {
+        html = `<label>السنة الهجرية: </label>
+                <input type="number" id="inputHijriYear" placeholder="مثلاً 1446">
+                <label>الشهر: </label>
+                <input type="number" id="inputHijriMonth" placeholder="مثلاً 1">
+                <label>اليوم: </label>
+                <input type="number" id="inputHijriDay" placeholder="مثلاً 1">`;
+      }
+      conversionInputs.innerHTML = html;
+      conversionResultDiv.innerHTML = "";
+    }
+    conversionTypeSelect.addEventListener("change", updateConversionInputs);
+    updateConversionInputs();
+    
+    document.getElementById("convertBtn").addEventListener("click", () => {
+      const type = conversionTypeSelect.value;
+      let resultText = "";
+      if(type === "g2b") {
+        const dateInput = document.getElementById("inputDate").value;
+        if(dateInput) {
+          const gDate = new Date(dateInput);
+          const bed = convertGregorianToBedalizian(gDate);
+          resultText = `التاريخ البيداليزي: ${bed.year} ${bedMonthsAr[bed.monthIndex]} ${bed.day}`;
+        }
+      } else if(type === "b2g") {
+        const bedYear = Number(document.getElementById("inputBedYear").value);
+        const bedMonth = Number(document.getElementById("inputBedMonth").value);
+        const bedDay = Number(document.getElementById("inputBedDay").value);
+        if(bedYear && bedMonth >= 0 && bedDay) {
+          const gDate = convertBedalizianToGregorian(bedYear, bedMonth, bedDay);
+          resultText = `التاريخ الميلادي: ${gDate.toDateString()}`;
+        }
+      } else if(type === "h2b") {
+        const hYear = Number(document.getElementById("inputHijriYear").value);
+        const hMonth = Number(document.getElementById("inputHijriMonth").value);
+        const hDay = Number(document.getElementById("inputHijriDay").value);
+        if(hYear && hMonth && hDay) {
+          const bed = convertHijriToBedalizian(hYear, hMonth, hDay);
+          resultText = `التاريخ البيداليزي: ${bed.year} ${bedMonthsAr[bed.monthIndex]} ${bed.day}`;
+        }
+      } else if(type === "b2h") {
+        const bedYear = Number(document.getElementById("inputBedYear").value);
+        const bedMonth = Number(document.getElementById("inputBedMonth").value);
+        const bedDay = Number(document.getElementById("inputBedDay").value);
+        if(bedYear && bedMonth >= 0 && bedDay) {
+          const hijri = convertBedalizianToHijri(bedYear, bedMonth, bedDay);
+          resultText = `التاريخ الهجري: ${hijri.year}-${hijri.month}-${hijri.day}`;
+        }
+      } else if(type === "g2h") {
+        const dateInput = document.getElementById("inputDate").value;
+        if(dateInput) {
+          const gDate = new Date(dateInput);
+          const hijri = convertGregorianToHijri(gDate);
+          resultText = `التاريخ الهجري: ${hijri.year}-${hijri.month}-${hijri.day}`;
+        }
+      } else if(type === "h2g") {
+        const hYear = Number(document.getElementById("inputHijriYear").value);
+        const hMonth = Number(document.getElementById("inputHijriMonth").value);
+        const hDay = Number(document.getElementById("inputHijriDay").value);
+        if(hYear && hMonth && hDay) {
+          const gDate = convertHijriToGregorian(hYear, hMonth, hDay);
+          resultText = `التاريخ الميلادي: ${gDate.toDateString()}`;
+        }
+      }
+      conversionResultDiv.innerHTML = resultText;
+    });
+    
+    /**************** تحديث وعرض التاريخ البيداليزي الحالي ****************/
+    function getCurrentBedDate() {
+      const baseGregorian = new Date("2024-11-01T00:00:00");
+      const baseBedYear = 13;
+      const diffDays = Math.floor((new Date() - baseGregorian) / (1000 * 60 * 60 * 24));
+      const daysInYear = 407;
+      const yearOffset = Math.floor(diffDays / daysInYear);
+      const bedYear = baseBedYear + yearOffset;
+      let remaining = diffDays % daysInYear;
+      if (remaining < 0) remaining += daysInYear;
+      let bedMonthIndex = 0;
+      for (let i = 0; i < bedMonthsAr.length; i++) {
+        if (remaining < daysPerMonth[bedMonthsAr[i]]) {
+          bedMonthIndex = i;
+          break;
+        }
+        remaining -= daysPerMonth[bedMonthsAr[i]];
+      }
+      const bedDay = remaining + 1;
+      return { year: bedYear, monthIndex: bedMonthIndex, day: bedDay };
+    }
+    function updateCurrentBedDate() {
+      const current = getCurrentBedDate();
+      let currentStr;
+      if (currentLanguage === "ar")
+        currentStr = `${current.year} ${bedMonthsAr[current.monthIndex]} ${current.day}`;
+      else if (currentLanguage === "en")
+        currentStr = `${current.year} ${bedMonthsEn[current.monthIndex]} ${current.day}`;
+      else if (currentLanguage === "fa")
+        currentStr = `${current.year} ${bedMonthsFa[current.monthIndex]} ${current.day}`;
+      else if (currentLanguage === "ur")
+        currentStr = `${current.year} ${bedMonthsUr[current.monthIndex]} ${current.day}`;
+      document.getElementById("currentBedDate").innerHTML = `<strong>${translations[currentLanguage].currentBedDate}</strong> ${currentStr}`;
+    }
+    updateCurrentBedDate();
+    
+    /**************** زر طباعة التقويم ****************/
+    document.getElementById("printBtn").addEventListener("click", () => {
+      window.print();
+    });
+    
+    /**************** زر تنزيل التقويم بصيغة CSV ****************/
+    document.getElementById("downloadBtn").addEventListener("click", () => {
+      let csvContent = "data:text/csv;charset=utf-8,";
+      csvContent += "السنة,الشهر,اليوم,اسم اليوم (عربي)\n";
+      // على سبيل المثال، ننزل تقويم السنة المختارة فقط
+      const selectedYearText = document.getElementById("selectedYearHeader").textContent;
+      if(selectedYearText) {
+        let year = selectedYearText.split(": ")[1];
+        for (let m = 0; m < bedMonthsAr.length; m++) {
+          for (let d = 1; d <= daysPerMonth[bedMonthsAr[m]]; d++) {
+            let dayName = bedDayNamesAr[(d-1) % bedDayNamesAr.length];
+            csvContent += `${year},${bedMonthsAr[m]},${d},${dayName}\n`;
+          }
+        }
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "تقويم_بيداليزي.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    });
+    
+    /**************** دعم رفع ملف صوتي ****************/
+    const bellSound = document.getElementById("bellSound");
+    const volumeControl = document.getElementById("volumeControl");
+    volumeControl.addEventListener("input", () => { bellSound.volume = volumeControl.value; });
+    document.getElementById("soundFileInput").addEventListener("change", function(e) {
+      const file = e.target.files[0];
+      if(file) {
+        const reader = new FileReader();
+        reader.onload = function(event) { bellSound.src = event.target.result; };
+        reader.readAsDataURL(file);
+      }
+    });
+    function playBell() {
+      bellSound.currentTime = 0;
+      bellSound.play();
+    }
+    
+    /**************** دعم تثبيت التطبيق (PWA) ****************/
+    let deferredPrompt;
+    const installBtn = document.getElementById("installBtn");
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.style.display = 'inline-block';
+    });
+    installBtn.addEventListener('click', () => {
+      installBtn.style.display = 'none';
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        console.log(choiceResult.outcome);
+        deferredPrompt = null;
+      });
+    });
+    
+    /**************** عند بدء التشغيل ****************/
+    loadCalendarForYear(startYear);
+    updateInterfaceText();
+  </script>
+</body>
+</html>
