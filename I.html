@@ -185,8 +185,8 @@
   <div class="conversion-section info-section">
     <h2>معلومات عن التقويم البيداليزي</h2>
     <p>
-      يعتمد التقويم البيداليزي على سنة مكونة من 407 يومًا مقسمة إلى 9 أشهر (8 أشهر بـ45 يومًا وشهر واحد بـ47 يومًا). 
-      يُستخدم هذا النظام في بعض الدراسات والبحوث الثقافية ويقدم طريقة بديلة لحساب الزمن مقارنةً بالتقويم الميلادي والهجري.
+      يعتمد التقويم البيداليزي على سنة مكونة من 407 يومًا مقسمة إلى 9 أشهر (8 أشهر بـ45 يومًا وشهر واحد بـ47 يومًا). يُستخدم هذا النظام في بعض الدراسات الثقافية والبحثية،
+      ويقدم طريقة بديلة لحساب الزمن مقارنةً بالتقويم الميلادي والهجري.
     </p>
   </div>
   
@@ -207,11 +207,7 @@
         selectedYear: "السنة: ",
         currentBedDate: "التاريخ البيداليزي الحالي:",
         volumeLabel: "مستوى الصوت:",
-        conversionTitle: "أدوات تحويل التواريخ",
-        reminderButton: "", // غير مستخدمة
-        reminderPlaceholder: "", // غير مستخدمة
-        remindersTitle: "", // غير مستخدمة
-        delete: "حذف" // غير مستخدمة
+        conversionTitle: "أدوات تحويل التواريخ"
       },
       en: {
         headerTitle: "Bedalizian Calendar",
@@ -219,11 +215,7 @@
         selectedYear: "Year: ",
         currentBedDate: "Current Bedalizian Date:",
         volumeLabel: "Volume:",
-        conversionTitle: "Date Conversion Tools",
-        reminderButton: "",
-        reminderPlaceholder: "",
-        remindersTitle: "",
-        delete: "Delete"
+        conversionTitle: "Date Conversion Tools"
       },
       fa: {
         headerTitle: "تقویم بدالیزی",
@@ -231,11 +223,7 @@
         selectedYear: "سال: ",
         currentBedDate: "تاریخ بدالیزی فعلی:",
         volumeLabel: "سطح صدا:",
-        conversionTitle: "ابزار تبدیل تاریخ",
-        reminderButton: "",
-        reminderPlaceholder: "",
-        remindersTitle: "",
-        delete: "حذف"
+        conversionTitle: "ابزار تبدیل تاریخ"
       },
       ur: {
         headerTitle: "بدالیزی کیلنڈر",
@@ -243,11 +231,7 @@
         selectedYear: "سال: ",
         currentBedDate: "موجودہ بدالیزی تاریخ:",
         volumeLabel: "آواز:",
-        conversionTitle: "تاریخ تبدیل کرنے کے اوزار",
-        reminderButton: "",
-        reminderPlaceholder: "",
-        remindersTitle: "",
-        delete: "حذف کریں"
+        conversionTitle: "تاریخ تبدیل کرنے کے اوزار"
       }
     };
     
@@ -293,7 +277,7 @@
     
     /**************** شريط السنوات الأفقي ****************/
     const startYear = 13;
-    const endYear = 100000000000000; // تقريباً 2000 سنة
+    const endYear = 2012; // يمكنك تعديل هذا الرقم لتحديد عدد السنوات المطلوبة
     const yearBar = document.getElementById("yearBar");
     function populateYearBar() {
       yearBar.innerHTML = "";
@@ -329,7 +313,7 @@
           const cell = document.createElement("div");
           cell.className = "day-cell";
           cell.innerHTML = `<div>${d}</div><div>${dayName}</div>`;
-          // عند النقر على اليوم، يتم فتح نافذة التحويل (يمكنك تعديلها لتشمل خصائص أخرى)
+          // عند النقر على اليوم، نستخدم تحويل بسيط لعرض التاريخ الميلادي (يمكنك إضافة تفاعل إضافي)
           cell.addEventListener("click", () => {
             const gDate = convertBedalizianToGregorian(year, m, d);
             alert(`${translations[currentLanguage].selectedYear}${year}\nاليوم الميلادي: ${gDate.toDateString()}`);
@@ -350,7 +334,6 @@
     }
     
     /**************** دوال التحويل ****************/
-    // تحويل ميلادي → بيداليزي (تحسين مبسط)
     function convertGregorianToBedalizian(date) {
       const baseGregorian = new Date("2024-11-01T00:00:00");
       const baseBedYear = 13;
@@ -371,7 +354,7 @@
       const bedDay = remaining + 1;
       return { year: bedYear, monthIndex: bedMonthIndex, day: bedDay };
     }
-    // تحويل بيداليزي → ميلادي
+    
     function convertBedalizianToGregorian(bedYear, bedMonthIndex, bedDay) {
       const baseGregorian = new Date("2024-11-01T00:00:00");
       const baseBedYear = 13;
@@ -382,7 +365,7 @@
       totalDays += (bedDay - 1);
       return new Date(baseGregorian.getTime() + totalDays * 86400000);
     }
-    // تحويل ميلادي → هجري (تقريباً)
+    
     function convertGregorianToHijri(date) {
       const m = date.getMonth() + 1;
       const y = date.getFullYear();
@@ -401,7 +384,7 @@
       const hYear = 30 * n + j - 30;
       return { year: hYear, month: hMonth, day: hDay };
     }
-    // تحويل هجري → ميلادي (تقريباً)
+    
     function convertHijriToGregorian(hYear, hMonth, hDay) {
       const jd = Math.floor((11 * hYear + 3) / 30) + 354 * hYear + 30 * hMonth - Math.floor((hMonth - 1) / 2) + hDay + 1948440 - 385;
       const f = jd + 0.5;
@@ -417,12 +400,12 @@
       const year = month > 2 ? d - 4716 : d - 4715;
       return new Date(year, month - 1, day);
     }
-    // تحويل هجري → بيداليزي: هجري → ميلادي → بيداليزي
+    
     function convertHijriToBedalizian(hYear, hMonth, hDay) {
       const gDate = convertHijriToGregorian(hYear, hMonth, hDay);
       return convertGregorianToBedalizian(gDate);
     }
-    // تحويل بيداليزي → هجري: بيداليزي → ميلادي → هجري
+    
     function convertBedalizianToHijri(bedYear, bedMonthIndex, bedDay) {
       const gDate = convertBedalizianToGregorian(bedYear, bedMonthIndex, bedDay);
       return convertGregorianToHijri(gDate);
@@ -572,74 +555,103 @@
       window.print();
     });
     
-    /**************** زر تنزيل التقويم بصيغة 
-  // زر تنزيل التقويم بصيغة CSV (تنسيق التقويم للسنة في صفحة واحدة)
-  document.getElementById("downloadBtn").addEventListener("click", () => {
-    // نحصل على السنة المختارة من عنوان السنة (على سبيل المثال "السنة: 13")
-    let selectedYearText = document.getElementById("selectedYearHeader").textContent;
-    let year = selectedYearText.split(": ")[1] || startYear;
-    
-    // نحدد أسماء الشهور وأسماء الأيام حسب اللغة الحالية
-    let monthNames, dayNames, dayHeader;
-    if (currentLanguage === "ar") {
-      monthNames = bedMonthsAr;
-      dayNames = bedDayNamesAr;
-      dayHeader = "اليوم";
-    } else if (currentLanguage === "en") {
-      monthNames = bedMonthsEn;
-      dayNames = bedDayNamesEn;
-      dayHeader = "Day";
-    } else if (currentLanguage === "fa") {
-      monthNames = bedMonthsFa;
-      dayNames = bedDayNamesFa;
-      dayHeader = "روز";
-    } else if (currentLanguage === "ur") {
-      monthNames = bedMonthsUr;
-      dayNames = bedDayNamesUr;
-      dayHeader = "دن";
-    } else {
-      monthNames = bedMonthsAr;
-      dayNames = bedDayNamesAr;
-      dayHeader = "اليوم";
-    }
-    
-    // نحدد الحد الأقصى لعدد الأيام في الشهور (هو 47، حيث شهر الرازيدزي يحتوي على 47 يومًا)
-    const maxDays = 47;
-    let csvContent = "data:text/csv;charset=utf-8,";
-    
-    // الصف الأول (العناوين): العمود الأول "اليوم" ثم أسماء الشهور
-    let headerRow = [dayHeader];
-    monthNames.forEach(m => headerRow.push(m));
-    csvContent += headerRow.join(",") + "\n";
-    
-    // لكل يوم من 1 إلى 47، ننشئ صفًا:
-    for (let d = 1; d <= maxDays; d++) {
-      let row = [];
-      row.push(d); // العمود الأول هو رقم اليوم
-      // لكل شهر في التقويم (9 شهور)
-      for (let m = 0; m < monthNames.length; m++) {
-        // نحصل على عدد الأيام في الشهر الحالي (مأخوذ من daysPerMonth باستخدام الاسم العربي للثبات)
-        let daysInMonth = daysPerMonth[bedMonthsAr[m]];
-        if (d <= daysInMonth) {
-          // نحتسب اسم اليوم بناءً على التكرار (نستخدم دالة modulo)
-          let dayName = dayNames[(d - 1) % dayNames.length];
-          row.push(`${d}-${dayName}`);
-        } else {
-          row.push(""); // إذا تجاوزنا عدد أيام الشهر، نترك الخانة فارغة
-        }
+    /**************** زر تنزيل التقويم بصيغة CSV ****************/
+    document.getElementById("downloadBtn").addEventListener("click", () => {
+      let selectedYearText = document.getElementById("selectedYearHeader").textContent;
+      let year = selectedYearText.split(": ")[1] || startYear;
+      
+      let monthNames, dayNames, dayHeader;
+      if (currentLanguage === "ar") {
+        monthNames = bedMonthsAr;
+        dayNames = bedDayNamesAr;
+        dayHeader = "اليوم";
+      } else if (currentLanguage === "en") {
+        monthNames = bedMonthsEn;
+        dayNames = bedDayNamesEn;
+        dayHeader = "Day";
+      } else if (currentLanguage === "fa") {
+        monthNames = bedMonthsFa;
+        dayNames = bedDayNamesFa;
+        dayHeader = "روز";
+      } else if (currentLanguage === "ur") {
+        monthNames = bedMonthsUr;
+        dayNames = bedDayNamesUr;
+        dayHeader = "دن";
+      } else {
+        monthNames = bedMonthsAr;
+        dayNames = bedDayNamesAr;
+        dayHeader = "اليوم";
       }
-      csvContent += row.join(",") + "\n";
+      
+      const maxDays = 47;
+      let csvContent = "data:text/csv;charset=utf-8,";
+      
+      let headerRow = [dayHeader];
+      monthNames.forEach(m => headerRow.push(m));
+      csvContent += headerRow.join(",") + "\n";
+      
+      for (let d = 1; d <= maxDays; d++) {
+        let row = [];
+        row.push(d);
+        for (let m = 0; m < monthNames.length; m++) {
+          let daysInMonth = daysPerMonth[bedMonthsAr[m]];
+          if (d <= daysInMonth) {
+            let dayName = dayNames[(d - 1) % dayNames.length];
+            row.push(`${d}-${dayName}`);
+          } else {
+            row.push("");
+          }
+        }
+        csvContent += row.join(",") + "\n";
+      }
+      
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `تقويم_بيداليزي_${year}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+    
+    /**************** دعم رفع ملف صوتي ****************/
+    const bellSound = document.getElementById("bellSound");
+    const volumeControl = document.getElementById("volumeControl");
+    volumeControl.addEventListener("input", () => {
+      bellSound.volume = volumeControl.value;
+    });
+    document.getElementById("soundFileInput").addEventListener("change", function(e) {
+      const file = e.target.files[0];
+      if(file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          bellSound.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+    function playBell() {
+      bellSound.currentTime = 0;
+      bellSound.play();
     }
     
-    // نُنشئ رابطًا افتراضيًا لتنزيل الملف
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `تقويم_بيداليزي_${year}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  });
+    /**************** دعم تثبيت التطبيق (PWA) ****************/
+    let deferredPrompt;
+    const installBtn = document.getElementById("installBtn");
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.style.display = 'inline-block';
+    });
+    installBtn.addEventListener('click', () => {
+      installBtn.style.display = 'none';
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        console.log(choiceResult.outcome);
+        deferredPrompt = null;
+      });
+    });
+    
     /**************** عند بدء التشغيل ****************/
     loadCalendarForYear(startYear);
     updateInterfaceText();
